@@ -4,7 +4,12 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/oli-g/chuper"
+	"github.com/lewgun/argyroneta/pkg/store"
+	_ "github.com/lewgun/argyroneta/pkg/store/bolt"
+
+	//"github.com/oli-g/chuper"
+	"github.com/lewgun/argyroneta/vendor/github.com/oli-g/chuper"
+	"fmt"
 )
 
 var (
@@ -12,13 +17,6 @@ var (
 
 	depth = 0
 
-	seeds = []string{
-		"http://www.repubblica.it",
-		"http://www.corriere.it",
-		"http://www.repubblica.it",
-		"http://www.corriere.it",
-		"http://www.gazzetta.it",
-	}
 
 	criteria = &chuper.ResponseCriteria{
 		Method:      "GET",
@@ -53,17 +51,40 @@ var (
 	})
 )
 
-func main() {
-	crawler := chuper.New()
-	crawler.CrawlDelay = delay
+func bootUp(s store.Store, q *chuper.Queue) error {
 
-	crawler.Register(criteria, firstProcessor, secondProcessor, thirdProcessor)
-	q := crawler.Start()
+	seeds, err := s.Rules()
+	if err != nil {
+		return err
+	}
+
+	for ident, seed := range seeds {
+
+
+	}
 
 	for _, u := range seeds {
 		q.Enqueue("GET", u, "www.google.com", depth)
 		depth++
 	}
+
+	return nil,
+}
+func main() {
+	crawler := chuper.New()
+	crawler.CrawlDelay = delay
+
+	s, err := store.Open( store.Bolt, "./test.db")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer s.Close()
+
+	crawler.Register(criteria, firstProcessor, secondProcessor, thirdProcessor)
+	q := crawler.Start()
+
+	bootUp(s, q)
 
 	crawler.Finish()
 }
