@@ -1,4 +1,4 @@
-//package bolt 实现基于blotdb的存储设备
+//Package bolt 实现基于blotdb的存储设备
 package bolt
 
 import (
@@ -9,21 +9,26 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/fatih/color"
-	"github.com/pquerna/ffjson/ffjson"
+	//"github.com/pquerna/ffjson/ffjson"
 )
 
 var (
-	RuleBucket []byte = []byte("rule")
-	SiteBucket []byte = []byte("site")
-	BlobBucket []byte = []byte("blob")
+    
+    //RuleBucket is a rule bucket
+	RuleBucket  = []byte("rule")
+    
+    //BlobBucket is a blob bucket
+	BlobBucket  = []byte("blob")
 )
 
-type BoltStore struct {
+//store a Store implemented with blot as backend
+type store struct {
 	db     *bolt.DB
 	opened bool
 }
 
-func (bs *BoltStore) Connect(filePath string) error {
+//Connect open a bolt instance
+func (bs *store) Connect(filePath string) error {
 	var err error
 	bs.db, err = bolt.Open(
 		filePath,
@@ -41,10 +46,7 @@ func (bs *BoltStore) Connect(filePath string) error {
 		if e != nil {
 			return e
 		}
-		_, e = tx.CreateBucketIfNotExists(SiteBucket)
-		if e != nil {
-			return e
-		}
+
 		_, e = tx.CreateBucketIfNotExists(BlobBucket)
 		if e != nil {
 			return e
@@ -63,7 +65,7 @@ func (bs *BoltStore) Connect(filePath string) error {
 			diff := stats.Sub(&prev)
 
 			// Encode stats to JSON and print to STDERR.
-			ffjson.NewEncoder(os.Stderr).Encode(diff)
+		//	ffjson.NewEncoder(os.Stderr).Encode(diff)
 			// Save stats for the next loop.
 			prev = stats
 
@@ -77,11 +79,12 @@ func (bs *BoltStore) Connect(filePath string) error {
 	return
 }
 
-func (bs *BoltStore) Close() error {
+//Close close the blot instance
+func (bs *store) Close() error {
 	bs.db.Close()
 	bs.opened = false
 }
 
 func init() {
-	store.Register(store.Bolt, &BoltStore{})
+	store.Register(store.Bolt, &store{})
 }

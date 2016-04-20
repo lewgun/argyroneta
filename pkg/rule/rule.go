@@ -9,7 +9,7 @@ import (
 
 	"github.com/lewgun/argyroneta/pkg/misc"
 
-	"github.com/fatih/color"
+	//"github.com/fatih/color"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -172,3 +172,10 @@ func (r *Rule) UnmarshalJSON(data []byte) (err error) {
 	}
 	return
 }
+
+
+func RuleFor ( s Site ) *Rule {
+    
+}
+
+func BootUp()

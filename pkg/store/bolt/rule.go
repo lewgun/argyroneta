@@ -9,11 +9,12 @@ import (
 	"github.com/pguerna/ffjson/ffjson"
 )
 
-func (bs *BoltStore) AddRule(r *rule.Rule) error {
+//
+func (bs *store) AddRule(r *rule.Rule) error {
 	return bs.UpdateRule(r)
 }
 
-func (bs *BoltStore) UpdateRule(r *rule.Rule) error {
+func (bs *store) UpdateRule(r *rule.Rule) error {
 
 	data, err := ffjson.Marshal(r)
 	if err != nil {
@@ -27,26 +28,26 @@ func (bs *BoltStore) UpdateRule(r *rule.Rule) error {
 
 }
 
-func (bs *BoltStore) DeleteRule(key string) error {
+func (bs *store) DeleteRule(site types.Site) error {
 
 	// Delete the key in a different write transaction.
 	err := bs.db.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket(RuleBucket).Delete([]byte(key))
+		return tx.Bucket(RuleBucket).Delete([]byte(site))
 	})
 	return err
 
 }
 
-func (bs *BoltStore) Rule(key string) (*rule.Rule, error) {
+func (bs *store) Rule(site types.Site) (*rule.Rule, error) {
 
 	var (
 		data []byte
-		r    *rule.Rule = &rule.Rule{}
+		r     = &rule.Rule{}
 	)
 
 	err := bs.db.View(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(RuleBucket)
-		data = bu.Get([]byte(key))
+		data = bu.Get([]byte(site))
 		if len(data) == 0 {
 			//color.Red(err.Error())
 			return errutil.ErrNotFound
@@ -67,7 +68,7 @@ func (bs *BoltStore) Rule(key string) (*rule.Rule, error) {
 
 }
 
-func (bs *BoltStore) Rules() (map[string]*rule.Rule, error) {
+func (bs *store) Rules() (map[types.Site]*rule.Rule, error) {
 	m := map[string]*rule.Rule{}
 	var err error
 

@@ -1,26 +1,28 @@
-package command
+//Package cmdmgr 
+package cmdmgr
 
 import (
 "sync"
-	"github.com/lewgun/argyroneta/vendor/github.com/PuerkitoBio/fetchbot"
-	"github.com/MieYua/Aliyun-OSS-Go-SDK/oss/types"
+"net/url"
+
+    "github.com/lewgun/argyroneta/pkg/types"
+    
+	"github.com/PuerkitoBio/fetchbot"
+	
 )
 
 
+
 const (
-	NetEase = "netease"
+	NetEase types.Site = "netease"
 )
 
 
 type Command interface {
 	fetchbot.Command
+    Depth() uint32
 }
 
-type Cmd struct {
-	*fetchbot.Cmd
-	S *url.URL
-	D int
-}
 
 type CMDMaker func (*types.Rule)
 
@@ -40,8 +42,10 @@ func Register(domain string, maker CMDMaker) {
 func Maker(domain string) CMDMaker {
 	if maker, ok := makers[domain]; !ok {
 		return nil
+        
 	} else {
 		return maker
 	}
 
 }
+

@@ -6,6 +6,9 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/lewgun/argyroneta/pkg/store"
 	_ "github.com/lewgun/argyroneta/pkg/store/bolt"
+    
+    "github.com/lewgun/argyroneta/pkg/cmdmgr"
+    
 
 	//"github.com/oli-g/chuper"
 	"github.com/lewgun/argyroneta/vendor/github.com/oli-g/chuper"
@@ -53,10 +56,15 @@ var (
 
 func bootUp(s store.Store, q *chuper.Queue) error {
 
-	seeds, err := s.Rules()
+	rules, err := s.Rules()
 	if err != nil {
 		return err
 	}
+    
+    err = cmdmgr.BootUp(rules)
+    if err != nil {
+        return err 
+    }
 
 	for ident, seed := range seeds {
 
