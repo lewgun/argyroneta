@@ -1,6 +1,40 @@
 {
   "store": {
     "path": "./test.db"
+  },
+  "http_proxies": ["http://127.0.0.1", "http://192.168.1.1"],
+
+  "sites": {
+    "news.163.com": {
+        "auth": {
+          "account": "testuser",
+          "password": "testpassword"
+        },
+        "spider": {
+          "politeness": false,
+          "user_agent": "chrome"
+        },
+        "max_depth": 2,
+        "delay": 60,
+        "proxy_on": false,
+        "seed": "http://news.163.com"
+
+      },
+    "news.sohu.com": {
+      "auth": {
+        "account": "testuser",
+        "password": "testpassword"
+      },
+      "spider": {
+        "politeness": false,
+        "user_agent": "chrome"
+      },
+      "max_depth": 2,
+      "delay": 60,
+      "proxy_on": false,
+      "seed": "http://news.163.com"
+
+    }
   }
 
 }
