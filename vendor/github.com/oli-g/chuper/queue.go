@@ -4,7 +4,6 @@ import (
 	"net/url"
 
 	"github.com/PuerkitoBio/fetchbot"
-
 )
 
 type Queue struct {
@@ -16,7 +15,7 @@ type Enqueuer interface {
 
 	EnqueueWithBasicAuth(string, string, string, int, string, string) error
 
-	EnqueueCommand( *fetchbot.Command ) error
+	EnqueueCommand(*fetchbot.Command) error
 }
 
 func (q *Queue) Enqueue(method, URL, sourceURL string, depth int) error {
@@ -57,8 +56,6 @@ func (q *Queue) EnqueueWithBasicAuth(method string, URL string, sourceURL string
 	return nil
 }
 
-
-func (q *Queue) EnqueueCommand( cmd *fetchbot.Command ) error   {
+func (q *Queue) EnqueueCommand(cmd *fetchbot.Command) error {
 	return q.Send(cmd)
 }
-

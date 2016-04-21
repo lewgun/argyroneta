@@ -1,8 +1,8 @@
 package memory
 
-import ( 
+import (
 	"sync"
-    
+
 	"github.com/lewgun/argyroneta/pkg/errutil"
 )
 
@@ -59,10 +59,10 @@ func (r *Memory) Delete(key string) error {
 	return nil
 }
 
-func (r *Memory) Has (key string ) bool {
-    r.Lock()
+func (r *Memory) Has(key string) bool {
+	r.Lock()
 	defer r.Unlock()
-    
-    _, ok :=  r.items[key]
-    return ok 
+
+	_, ok := r.items[key]
+	return ok
 }

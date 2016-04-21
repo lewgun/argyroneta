@@ -1,6 +1,5 @@
 package cache
 
-
 type Cache interface {
 	Get(key string) (interface{}, error)
 
@@ -10,4 +9,3 @@ type Cache interface {
 
 	Delete(key string) error
 }
-

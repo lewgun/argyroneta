@@ -13,22 +13,21 @@ import (
 )
 
 var (
-    
-    //RuleBucket is a rule bucket
-	RuleBucket  = []byte("rule")
-    
-    //BlobBucket is a blob bucket
-	BlobBucket  = []byte("blob")
+
+	//RuleBucket is a rule bucket
+	RuleBucket = []byte("rule")
+
+	//BlobBucket is a blob bucket
+	BlobBucket = []byte("blob")
 )
 
 //store a Store implemented with blot as backend
 type store struct {
-	db     *bolt.DB
-	opened bool
+	db *bolt.DB
 }
 
-//Connect open a bolt instance
-func (bs *store) Connect(filePath string) error {
+//PowerOn open a bolt instance
+func (bs *store) PowerOn(filePath string) error {
 	var err error
 	bs.db, err = bolt.Open(
 		filePath,
@@ -65,7 +64,7 @@ func (bs *store) Connect(filePath string) error {
 			diff := stats.Sub(&prev)
 
 			// Encode stats to JSON and print to STDERR.
-		//	ffjson.NewEncoder(os.Stderr).Encode(diff)
+			//	ffjson.NewEncoder(os.Stderr).Encode(diff)
 			// Save stats for the next loop.
 			prev = stats
 
@@ -74,15 +73,13 @@ func (bs *store) Connect(filePath string) error {
 		}
 	}()
 
-	bs.opened = true
-
 	return
 }
 
 //Close close the blot instance
-func (bs *store) Close() error {
-	bs.db.Close()
-	bs.opened = false
+func (bs *store) PowerOff() error {
+	return bs.db.Close()
+
 }
 
 func init() {

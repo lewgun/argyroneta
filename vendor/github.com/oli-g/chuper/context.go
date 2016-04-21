@@ -51,7 +51,7 @@ func (c *Ctx) SourceURL() *url.URL {
 	switch cmd := c.Cmd.(type) {
 	case *Cmd:
 		return cmd.SourceURL()
-        
+
 	case *CmdBasicAuth:
 		return cmd.SourceURL()
 	default:

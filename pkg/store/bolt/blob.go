@@ -7,7 +7,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-func (bs *BoltStore) SaveBlob(key string, raw []byte) error {
+func (bs *store) SaveBlob(key string, raw []byte) error {
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(BlobBucket)
 		gzipped, e := misc.Zip(raw)
@@ -19,7 +19,7 @@ func (bs *BoltStore) SaveBlob(key string, raw []byte) error {
 	return err
 }
 
-func (b *BoltStore) Blob(key string) ([]byte, error) {
+func (b *store) Blob(key string) ([]byte, error) {
 	var (
 		raw []byte
 		err error
@@ -41,7 +41,8 @@ func (b *BoltStore) Blob(key string) ([]byte, error) {
 
 }
 
-func (bs *BoltStore) DeleteBlob(key string) error {
+
+func (bs *store) DeleteBlob(key string) error {
 
 	// Delete the key in a different write transaction.
 	err := bs.db.Update(func(tx *bolt.Tx) error {

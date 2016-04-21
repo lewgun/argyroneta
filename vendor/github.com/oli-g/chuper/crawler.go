@@ -89,6 +89,10 @@ func (c *Crawler) Finish() {
 	c.q.Close()
 }
 
+func (c *Crawler) Cancel() {
+	c.q.Cancel()
+}
+
 type ResponseCriteria struct {
 	Method      string
 	ContentType string

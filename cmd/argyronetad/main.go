@@ -1,98 +1,58 @@
 package main
 
 import (
-	"time"
+	"flag"
 
-	"github.com/PuerkitoBio/goquery"
+	"github.com/lewgun/argyroneta/cmd/argyronetad/pkg/config"
+
 	"github.com/lewgun/argyroneta/pkg/store"
 	_ "github.com/lewgun/argyroneta/pkg/store/bolt"
-    
-    "github.com/lewgun/argyroneta/pkg/cmdmgr"
-    
 
-	//"github.com/oli-g/chuper"
-	"github.com/lewgun/argyroneta/vendor/github.com/oli-g/chuper"
-	"fmt"
+	"github.com/lewgun/argyroneta/pkg/spidermgr"
+	"github.com/lewgun/argyroneta/pkg/logger"
 )
 
 var (
-	delay = 2 * time.Second
-
-	depth = 0
-
-
-	criteria = &chuper.ResponseCriteria{
-		Method:      "GET",
-		ContentType: "text/html",
-		Status:      200,
-		Host:        "www.gazzetta.it",
-	}
-
-	firstProcessor = chuper.ProcessorFunc(func(ctx chuper.Context, doc *goquery.Document) bool {
-		ctx.Log(map[string]interface{}{
-			"url":    ctx.URL().String(),
-			"source": ctx.SourceURL().String(),
-		}).Info("First processor")
-		return true
-	})
-
-	secondProcessor = chuper.ProcessorFunc(func(ctx chuper.Context, doc *goquery.Document) bool {
-		ctx.Log(map[string]interface{}{
-			"url":    ctx.URL().String(),
-			"source": ctx.SourceURL().String(),
-		}).Info("Second processor")
-		return false
-
-	})
-
-	thirdProcessor = chuper.ProcessorFunc(func(ctx chuper.Context, doc *goquery.Document) bool {
-		ctx.Log(map[string]interface{}{
-			"url":    ctx.URL().String(),
-			"source": ctx.SourceURL().String(),
-		}).Info("Third processor")
-		return true
-	})
+	confPath = flag.String("conf", "./argyronetad.json", "the path to the config file")
 )
 
-func bootUp(s store.Store, q *chuper.Queue) error {
+func powerOn(c *config.Config) func() {
 
-	rules, err := s.Rules()
+	s, err := store.PowerOn(store.Bolt, c.Store.Path)
 	if err != nil {
-		return err
-	}
-    
-    err = cmdmgr.BootUp(rules)
-    if err != nil {
-        return err 
-    }
-
-	for ident, seed := range seeds {
-
-
+		panic(err)
 	}
 
-	for _, u := range seeds {
-		q.Enqueue("GET", u, "www.google.com", depth)
-		depth++
+	logger := logger.New(c.Format, c.Level)
+
+	sm := spidermgr.SharedInstance()
+	errs := sm.Init(c.Sites, logger)
+	if err != nil {
+		panic(errs[0])
 	}
 
-	return nil,
+	sm.PowerOn()
+
+	return func() {
+		s.PowerOff()
+		sm.PowerOff()
+	}
+}
+
+func mustPrepare(path string) *config.Config {
+
+	c := config.New()
+	err := c.Init(path)
+	if err != nil {
+		panic(err)
+	}
+	return c
+
 }
 func main() {
-	crawler := chuper.New()
-	crawler.CrawlDelay = delay
 
-	s, err := store.Open( store.Bolt, "./test.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer s.Close()
+	flag.Parse()
 
-	crawler.Register(criteria, firstProcessor, secondProcessor, thirdProcessor)
-	q := crawler.Start()
+	defer powerOn(mustPrepare(*confPath))()
 
-	bootUp(s, q)
-
-	crawler.Finish()
 }
