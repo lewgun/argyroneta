@@ -20,8 +20,13 @@
           "politeness": false,
           "user_agent": "chrome"
         },
+        "filters": {
+          "selector": [],
+          "accept": [],
+          "reject": []
+        },
         "max_depth": 2,
-        "delay": 60,
+        "delay": 0,
         "proxy_on": false,
         "seed": "http://news.163.com"
 

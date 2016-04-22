@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 )
 
@@ -47,6 +48,14 @@ type Spider struct {
 
 }
 
+type Filter struct {
+	AcceptExpr []string `accept`
+	RejectExpr []string `reject`
+
+	Accept []*regexp.Regexp `json:"-"`
+	Reject []*regexp.Regexp `json:"-"`
+}
+
 func (s *Spider) String() string {
 	return fmt.Sprintf("[spider]: user agent:%s politeness: %v", s.UserAgent, s.Politeness)
 }
@@ -54,6 +63,7 @@ func (s *Spider) String() string {
 type Site struct {
 	*Auth   `json:"auth"`
 	*Spider `json:"spider"`
+	Filter  `json:"filter"`
 
 	MaxDepth int           `json:"max_depth"` //最大抓取深度
 	Delay    time.Duration `json:"delay"`     //抓取间隔(以s计)

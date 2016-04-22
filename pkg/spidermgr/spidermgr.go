@@ -9,17 +9,13 @@ import (
 
 	"github.com/lewgun/argyroneta/pkg/cache"
 	"github.com/lewgun/argyroneta/pkg/cache/memory"
+	"github.com/lewgun/argyroneta/pkg/constants"
+	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Sirupsen/logrus"
-	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/oli-g/chuper"
-)
-
-const (
-	HTTP_POST = "POST"
-	HTTP_GET  = "GET"
 )
 
 type HTMLHandler func(chuper.Context, *goquery.Document) bool
@@ -43,8 +39,6 @@ type SpiderMgr struct {
 	spiders  map[types.Domain]*Spider
 	handlers map[types.Domain]HTMLHandler
 	rules    map[types.Domain]*types.Site
-
-	chanExit <-chan struct{}
 
 	urlPool cache.Cache
 	logger  *logrus.Logger
@@ -152,6 +146,7 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 	crawler.Cache = sm.urlPool
 	crawler.CrawlPoliteness = rule.Politeness
 	crawler.Logger = sm.logger
+	crawler.Extra = rule
 
 	crawler.Register(criteria, chuper.ProcessorFunc(h))
 
@@ -168,7 +163,7 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 func (sm *SpiderMgr) PowerOn() error {
 
 	for domain, spider := range sm.spiders {
-		spider.Enqueuer.Enqueue(HTTP_GET, sm.rules[domain].Seed, "", sm.rules[domain].MaxDepth)
+		spider.Enqueuer.Enqueue(constants.HTTP_GET, sm.rules[domain].Seed, "", sm.rules[domain].MaxDepth)
 		sm.logger.Infof("seed for %s is putted with max depth: %d", domain, sm.rules[domain].MaxDepth)
 
 	}

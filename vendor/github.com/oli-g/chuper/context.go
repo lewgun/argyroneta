@@ -15,11 +15,13 @@ type Context interface {
 	Method() string
 	SourceURL() *url.URL
 	Depth() int
+	Extra() interface{}
 }
 
 type Ctx struct {
 	*fetchbot.Context
 	C Cache
+	E interface{}
 	L *logrus.Logger
 }
 
@@ -57,6 +59,10 @@ func (c *Ctx) SourceURL() *url.URL {
 	default:
 		return nil
 	}
+}
+
+func (c *Ctx) Extra() interface{} {
+	return c.E
 }
 
 func (c *Ctx) Depth() int {

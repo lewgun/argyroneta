@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 
 	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
@@ -60,6 +61,32 @@ func (c *Config) Init(path string) error {
 }
 
 func (c *Config) adjust() error {
+
+	var (
+		re   *regexp.Regexp
+		err  error
+		expr string
+	)
+	for _, site := range c.Sites {
+
+		site.Filter.Accept = make([]*regexp.Regexp, 0, len(site.Filter.AcceptExpr))
+		site.Filter.Reject = make([]*regexp.Regexp, 0, len(site.Filter.RejectExpr))
+
+		for _, expr = range site.Filter.AcceptExpr {
+			if re, err = regexp.Compile(expr); err != nil {
+				continue
+			}
+			site.Filter.Accept = append(site.Filter.Accept, re)
+		}
+
+		for _, expr := range site.Filter.RejectExpr {
+			if re, err = regexp.Compile(expr); err != nil {
+				continue
+			}
+			site.Filter.Reject = append(site.Filter.Reject, re)
+		}
+
+	}
 
 	return nil
 }

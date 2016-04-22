@@ -33,6 +33,7 @@ type Crawler struct {
 	UserAgent       string
 	HTTPClient      fetchbot.Doer
 	Cache           Cache
+	Extra           interface{}
 
 	mux *fetchbot.Mux
 	f   *fetchbot.Fetcher
@@ -196,7 +197,12 @@ func (c *Crawler) newErrorHandler() fetchbot.Handler {
 func (c *Crawler) newRequestHandler() fetchbot.Handler {
 	return fetchbot.HandlerFunc(func(ctx *fetchbot.Context, res *http.Response, err error) {
 		if res != nil {
-			context := &Ctx{ctx, c.Cache, c.Logger}
+			context := &Ctx{
+				Context: ctx,
+				C:       c.Cache,
+				E:       c.Extra,
+				L:       c.Logger,
+			}
 			c.Logger.WithFields(logrus.Fields{
 				"method":       context.Method(),
 				"status":       res.StatusCode,
@@ -210,7 +216,14 @@ func (c *Crawler) newRequestHandler() fetchbot.Handler {
 
 func (c *Crawler) newHTMLHandler(procs ...Processor) fetchbot.Handler {
 	return fetchbot.HandlerFunc(func(ctx *fetchbot.Context, res *http.Response, err error) {
-		context := &Ctx{ctx, c.Cache, c.Logger}
+
+		context := &Ctx{
+			Context: ctx,
+			C:       c.Cache,
+			E:       c.Extra,
+			L:       c.Logger,
+		}
+
 		doc, err := goquery.NewDocumentFromResponse(res)
 		if err != nil {
 			c.Logger.WithFields(logrus.Fields{
