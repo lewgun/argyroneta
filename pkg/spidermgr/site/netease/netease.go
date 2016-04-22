@@ -46,6 +46,20 @@ func handlerDepth1(ctx chuper.Context, doc *goquery.Document) bool {
 	if !ok {
 		return false
 	}
+	
+	var selection = doc.Find("div.endContent")
+	selection.Each(func(i int, s *goquery.Selection) {
+		title := s.Find("h1#h1title").Text()
+		// url, _ := s.Attr("href")
+		// println(url)
+		
+		// utf8Txt,_ := gbk2Utf8([]byte(s.Text()))
+		// println(string(utf8Txt))
+		 println(title)
+		
+		ctx.Queue().Enqueue(constants.HTTP_GET, url, "", ctx.Depth()-1)
+	})
+	
 
 	ctx.Queue().Enqueue(constants.HTTP_GET, rule.Seed, "", ctx.Depth()-1)
 
@@ -54,22 +68,23 @@ func handlerDepth1(ctx chuper.Context, doc *goquery.Document) bool {
 func handlerDepth2(ctx chuper.Context, doc *goquery.Document) bool {
 	ctx.Log(nil).Info("handlerDepth2")
 
-	rule, ok := ctx.Extra().(*types.Site)
-	if !ok {
-		return false
-	}
+	// rule, ok := ctx.Extra().(*types.Site)
+	// if !ok {
+	// 	return false
+	// }
 	
 	var selection = doc.Find("div.tabBox div.tabContents.active a")
 	selection.Each(func(i int, s *goquery.Selection) {
 		url, _ := s.Attr("href")
-		println(url)
+		//println(url)
 		
-		utf8Txt,_ := gbk2Utf8([]byte(s.Text()))
-		println(string(utf8Txt))
-		println()
+		// utf8Txt,_ := gbk2Utf8([]byte(s.Text()))
+		// println(string(utf8Txt))
+		// println()
+		
+		ctx.Queue().Enqueue(constants.HTTP_GET, url, "", ctx.Depth()-1)
 	})
 
-	ctx.Queue().Enqueue(constants.HTTP_GET, rule.Seed, "", ctx.Depth()-1)
 	return true
 }
 
