@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
 
 	"github.com/lewgun/argyroneta/cmd/argyronetad/pkg/config"
 
@@ -9,6 +11,8 @@ import (
 	_ "github.com/lewgun/argyroneta/pkg/store/bolt"
 
 	"github.com/lewgun/argyroneta/pkg/spidermgr"
+	_ "github.com/lewgun/argyroneta/pkg/spidermgr/site/netease"
+
 	"github.com/lewgun/argyroneta/pkg/logger"
 )
 
@@ -16,15 +20,18 @@ var (
 	confPath = flag.String("conf", "./argyronetad.json", "the path to the config file")
 )
 
-func powerOn(c *config.Config) func() {
+func powerOn(c *config.Config) func(<-chan os.Signal) {
 
-	s, err := store.PowerOn(store.Bolt, c.Store.Path)
+	//logger
+	logger := logger.New(c.Format, c.Level)
+
+	//store
+	s, err := store.PowerOn(store.Bolt, c.Store.Path, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	logger := logger.New(c.Format, c.Level)
-
+	//spider manager
 	sm := spidermgr.SharedInstance()
 	errs := sm.Init(c.Sites, logger)
 	if err != nil {
@@ -33,9 +40,12 @@ func powerOn(c *config.Config) func() {
 
 	sm.PowerOn()
 
-	return func() {
-		s.PowerOff()
+	return func(sig <-chan os.Signal) {
+		<-sig
+
 		sm.PowerOff()
+		s.PowerOff()
+
 	}
 }
 
@@ -52,7 +62,10 @@ func mustPrepare(path string) *config.Config {
 func main() {
 
 	flag.Parse()
+	sig := make(chan os.Signal, 1)
 
-	defer powerOn(mustPrepare(*confPath))()
+	go signal.Notify(sig, os.Interrupt, os.Kill)
+
+	powerOn(mustPrepare(*confPath))(sig)
 
 }

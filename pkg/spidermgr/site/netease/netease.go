@@ -4,7 +4,9 @@ import (
 	"github.com/oli-g/chuper"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/Sirupsen/logrus"
+	"github.com/lewgun/argyroneta/pkg/spidermgr"
+	//"github.com/Sirupsen/logrus"
+	"github.com/lewgun/argyroneta/pkg/constants"
 )
 
 func handler(ctx chuper.Context, doc *goquery.Document) bool {
@@ -14,4 +16,8 @@ func handler(ctx chuper.Context, doc *goquery.Document) bool {
 	//}).Info("First processor")
 
 	return true
+}
+
+func init() {
+	spidermgr.Register(constants.NetEase, handler)
 }

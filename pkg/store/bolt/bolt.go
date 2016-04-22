@@ -2,14 +2,14 @@
 package bolt
 
 import (
-	"os"
 	"time"
 
-	"github.com/lewgun/argyroneta/pkg/store"
+	storeMgr "github.com/lewgun/argyroneta/pkg/store"
 
 	"github.com/boltdb/bolt"
-	"github.com/fatih/color"
+	//"github.com/fatih/color"
 	//"github.com/pquerna/ffjson/ffjson"
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -23,11 +23,15 @@ var (
 
 //store a Store implemented with blot as backend
 type store struct {
-	db *bolt.DB
+	db     *bolt.DB
+	logger *logrus.Logger
 }
 
 //PowerOn open a bolt instance
-func (bs *store) PowerOn(filePath string) error {
+func (bs *store) PowerOn(filePath string, logger *logrus.Logger) error {
+
+	bs.logger = logger
+
 	var err error
 	bs.db, err = bolt.Open(
 		filePath,
@@ -52,28 +56,28 @@ func (bs *store) PowerOn(filePath string) error {
 		}
 		return nil
 	})
+	//
+	//go func() {
+	//	// Grab the initial stats.
+	//	prev := bs.db.Stats()
+	//
+	//	for {
+	//
+	//		// Grab the current stats and diff them.
+	//		stats := bs.db.Stats()
+	//		diff := stats.Sub(&prev)
+	//
+	//		// Encode stats to JSON and print to STDERR.
+	//		//	ffjson.NewEncoder(os.Stderr).Encode(diff)
+	//		// Save stats for the next loop.
+	//		prev = stats
+	//
+	//		// Wait for 10s.
+	//		time.Sleep(60 * time.Second)
+	//	}
+	//}()
 
-	go func() {
-		// Grab the initial stats.
-		prev := bs.db.Stats()
-
-		for {
-
-			// Grab the current stats and diff them.
-			stats := bs.db.Stats()
-			diff := stats.Sub(&prev)
-
-			// Encode stats to JSON and print to STDERR.
-			//	ffjson.NewEncoder(os.Stderr).Encode(diff)
-			// Save stats for the next loop.
-			prev = stats
-
-			// Wait for 10s.
-			time.Sleep(60 * time.Second)
-		}
-	}()
-
-	return
+	return nil
 }
 
 //Close close the blot instance
@@ -83,5 +87,5 @@ func (bs *store) PowerOff() error {
 }
 
 func init() {
-	store.Register(store.Bolt, &store{})
+	storeMgr.Register(storeMgr.Bolt, &store{})
 }

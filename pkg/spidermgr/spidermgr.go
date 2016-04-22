@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
+	"time"
 
-	"github.com/lewgun/argyroneta/pkg/types"
 	"github.com/lewgun/argyroneta/pkg/cache"
 	"github.com/lewgun/argyroneta/pkg/cache/memory"
+	"github.com/lewgun/argyroneta/pkg/types"
 
-	"github.com/oli-g/chuper"
-	"github.com/lewgun/argyroneta/pkg/errutil"
-	"github.com/Sirupsen/logrus"
 	"github.com/PuerkitoBio/goquery"
-)
-
-const (
-	NetEase types.Domain = "netease"
+	"github.com/Sirupsen/logrus"
+	"github.com/lewgun/argyroneta/pkg/errutil"
+	"github.com/oli-g/chuper"
 )
 
 const (
@@ -35,7 +32,10 @@ type Spider struct {
 var SM *SpiderMgr
 
 func init() {
-	SM = &SpiderMgr{}
+	SM = &SpiderMgr{
+		spiders:  make(map[types.Domain]*Spider),
+		handlers: make(map[types.Domain]HTMLHandler),
+	}
 }
 
 type SpiderMgr struct {
@@ -43,6 +43,8 @@ type SpiderMgr struct {
 	spiders  map[types.Domain]*Spider
 	handlers map[types.Domain]HTMLHandler
 	rules    map[types.Domain]*types.Site
+
+	chanExit <-chan struct{}
 
 	urlPool cache.Cache
 	logger  *logrus.Logger
@@ -64,10 +66,11 @@ func (sm *SpiderMgr) register(domain types.Domain, maker HTMLHandler) error {
 }
 func (sm *SpiderMgr) PowerOff() error {
 
-	for _, spider := range sm.spiders {
+	for domain, spider := range sm.spiders {
 		sm.wg.Add(1)
 		go func() {
 			defer sm.wg.Done()
+			sm.logger.Infof("wait for spider for %s finished\n", domain)
 			spider.Crawler.Finish()
 			spider.Crawler.Block()
 		}()
@@ -75,13 +78,15 @@ func (sm *SpiderMgr) PowerOff() error {
 	}
 
 	sm.wg.Wait()
+
+	sm.logger.Infof("spider manager is power off now")
 	return nil
 
 }
 
 func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Logger) []error {
 	if rules == nil {
-		return errutil.ErrInvalidParameter
+		return []error{errutil.ErrInvalidParameter}
 	}
 
 	sm.urlPool = memory.New()
@@ -101,7 +106,10 @@ func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Log
 
 	for domain, _ := range rules {
 		if h, ok = sm.handlers[domain]; !ok {
-			errs = append(errs, fmt.Errorf("no html handler for '%s' ", domain))
+			err := fmt.Errorf("no html handler for '%s' ", domain)
+			sm.logger.Errorln(err)
+
+			errs = append(errs, err)
 			continue
 		}
 
@@ -112,16 +120,14 @@ func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Log
 		}
 
 		sm.spiders[domain] = spider
-
 	}
 
+	sm.logger.Info("spider manager's init is finished")
 	return errs
 
 }
 
-func (sm *SpiderMgr) spiderMaker(domain string, h HTMLHandler) (*Spider, error) {
-
-	//rule *types.Site, urlPool cache.Cache, logger *logrus.Logger,
+func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, error) {
 
 	rule, ok := sm.rules[domain]
 	if !ok {
@@ -141,13 +147,15 @@ func (sm *SpiderMgr) spiderMaker(domain string, h HTMLHandler) (*Spider, error) 
 	}
 
 	crawler := chuper.New()
-	crawler.CrawlDelay = rule.Delay * 1e6
+	crawler.CrawlDelay = rule.Delay * time.Second
 	crawler.UserAgent = rule.UserAgent
 	crawler.Cache = sm.urlPool
 	crawler.CrawlPoliteness = rule.Politeness
 	crawler.Logger = sm.logger
 
 	crawler.Register(criteria, chuper.ProcessorFunc(h))
+
+	sm.logger.Infof("spider for %s is running", domain)
 
 	return &Spider{
 		Crawler:  crawler,
@@ -161,13 +169,15 @@ func (sm *SpiderMgr) PowerOn() error {
 
 	for domain, spider := range sm.spiders {
 		spider.Enqueuer.Enqueue(HTTP_GET, sm.rules[domain].Seed, "", sm.rules[domain].MaxDepth)
+		sm.logger.Infof("seed for %s is putted with max depth: %d", domain, sm.rules[domain].MaxDepth)
 
 	}
+	return nil
 
 }
 
 //Register 注册一个蜘蛛生成器
-func Register(domain string, h HTMLHandler) error {
+func Register(domain types.Domain, h HTMLHandler) error {
 	return SM.register(domain, h)
 
 }

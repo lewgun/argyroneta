@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type Blob []byte
 
@@ -52,8 +55,8 @@ type Site struct {
 	*Auth   `json:"auth"`
 	*Spider `json:"spider"`
 
-	MaxDepth uint32 `json:"max_depth"` //最大抓取深度
-	Delay    uint32 `json:"delay"`     //抓取间隔(以s计)
+	MaxDepth int           `json:"max_depth"` //最大抓取深度
+	Delay    time.Duration `json:"delay"`     //抓取间隔(以s计)
 
 	Seed string `json:"seed"` //种子url
 

@@ -5,9 +5,10 @@ import (
 	"github.com/lewgun/argyroneta/pkg/misc"
 
 	"github.com/boltdb/bolt"
+	"github.com/lewgun/argyroneta/pkg/types"
 )
 
-func (bs *store) SaveBlob(key string, raw []byte) error {
+func (bs *store) SaveBlob(key string, raw types.Blob) error {
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(BlobBucket)
 		gzipped, e := misc.Zip(raw)
@@ -19,7 +20,7 @@ func (bs *store) SaveBlob(key string, raw []byte) error {
 	return err
 }
 
-func (b *store) Blob(key string) ([]byte, error) {
+func (b *store) Blob(key string) (types.Blob, error) {
 	var (
 		raw []byte
 		err error
@@ -40,7 +41,6 @@ func (b *store) Blob(key string) ([]byte, error) {
 	return raw, err
 
 }
-
 
 func (bs *store) DeleteBlob(key string) error {
 

@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-
 )
 
 func New(format, level string) *logrus.Logger {

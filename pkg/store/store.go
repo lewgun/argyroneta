@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"github.com/lewgun/argyroneta/pkg/types"
+
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -11,7 +13,7 @@ const (
 )
 
 type BlobStore interface {
-	AddBlob(r *types.Blob) error
+	SaveBlob(key string, blob types.Blob) error
 	DeleteBlob(key string) error
 	Blob(key string) (types.Blob, error)
 }
@@ -20,7 +22,7 @@ type BlobStore interface {
 type Store interface {
 	BlobStore
 
-	PowerOn(string) error
+	PowerOn(string, *logrus.Logger) error
 	PowerOff() error
 }
 
@@ -37,10 +39,10 @@ func Register(name string, store Store) {
 }
 
 //PowerOn 打开一个存储设备
-func PowerOn(name string, conf string) (Store, error) {
+func PowerOn(name string, conf string, logger *logrus.Logger) (Store, error) {
 	if store, ok := stores[name]; !ok {
 		panic("store not found")
 	} else {
-		return store, store.PowerOn(conf)
+		return store, store.PowerOn(conf, logger)
 	}
 }
