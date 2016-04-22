@@ -45,6 +45,14 @@ func handlerDepth2(ctx chuper.Context, doc *goquery.Document) bool {
 	if !ok {
 		return false
 	}
+	
+	var selection = doc.Find("div.tabBox div.tabContents.active a")
+	selection.Each(func(i int, s *goquery.Selection) {
+		val, _ := s.Attr("href")
+		println(val)
+	}
+	
+	
 
 	ctx.Queue().Enqueue(constants.HTTP_GET, rule.Seed, "", ctx.Depth()-1)
 	return true

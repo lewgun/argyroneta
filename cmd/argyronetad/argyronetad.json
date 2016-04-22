@@ -28,7 +28,7 @@
         "max_depth": 2,
         "delay": 0,
         "proxy_on": false,
-        "seed": "http://news.163.com"
+        "seed": "http://news.163.com/rank/"
 
       },
     "news.sohu.com": {
