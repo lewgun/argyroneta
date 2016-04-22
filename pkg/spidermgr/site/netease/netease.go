@@ -1,15 +1,28 @@
 package netease
 
 import (
+	"bytes"
+	"io/ioutil"
+	
 	"github.com/oli-g/chuper"
-
+	
 	"github.com/PuerkitoBio/goquery"
 	"github.com/lewgun/argyroneta/pkg/spidermgr"
 	//"github.com/Sirupsen/logrus"
 	"github.com/lewgun/argyroneta/pkg/constants"
 
 	"github.com/lewgun/argyroneta/pkg/types"
+	
+	 "golang.org/x/text/encoding/simplifiedchinese"
+	  "golang.org/x/text/transform"
 )
+
+func gbk2Utf8(raw []byte) ([]byte, error) { 
+    rGBK := bytes.NewReader(raw)
+    rUTF8 := transform.NewReader(rGBK, simplifiedchinese.GBK.NewDecoder())
+    return ioutil.ReadAll(rUTF8)
+
+}
 
 var handlerMap map[int]spidermgr.HTMLHandler
 
@@ -48,52 +61,19 @@ func handlerDepth2(ctx chuper.Context, doc *goquery.Document) bool {
 	
 	var selection = doc.Find("div.tabBox div.tabContents.active a")
 	selection.Each(func(i int, s *goquery.Selection) {
-		val, _ := s.Attr("href")
-		println(val)
-	}
-	
-	
+		url, _ := s.Attr("href")
+		println(url)
+		
+		utf8Txt,_ := gbk2Utf8([]byte(s.Text()))
+		println(string(utf8Txt))
+		println()
+	})
 
 	ctx.Queue().Enqueue(constants.HTTP_GET, rule.Seed, "", ctx.Depth()-1)
 	return true
 }
 
-/*
-	r := &Rule{
-		Ident:    "tmcnet",
-		Start:    "http://www.tmcnet.com/voip/",
-		CSSLinks: "a[href]",
-		CSSTitle: "title",
-		Restart:  30 * time.Minute,
-		Accept: []*regexp.Regexp{
-			regexp.MustCompile(`^/voip/(departments|columns|features)/articles/`),
-		},
-		Reject: []*regexp.Regexp{
-			regexp.MustCompile(`bad link`),
-		},
-	}
-*/
-// func handler(ctx chuper.Context, doc *goquery.Document) bool {
-// 	ctx.Log(map[string]interface{}{
-// 	"url":    ctx.URL().String(),
-// 	"source": ctx.SourceURL().String(),
-// 	"depth": ctx.Depth(),
-// 	}).Info("First processor")
 
-// 	//已经挖到极限深度
-// 	if ctx.Depth() <= 0 {
-// 		return true
-// 	}
-
-// 	rule, ok := ctx.Extra.(*types.Site)
-// 	if !ok {
-// 		return false
-// 	}
-
-// 	rule.ExtractLinks()
-
-// 	return true
-// }
 
 func handler(ctx chuper.Context, doc *goquery.Document) bool {
 	ctx.Log(map[string]interface{}{
