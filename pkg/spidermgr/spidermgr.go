@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lewgun/argyroneta/pkg/cache"
-	"github.com/lewgun/argyroneta/pkg/cache/memory"
+	//"github.com/lewgun/argyroneta/pkg/cache"
+	//"github.com/lewgun/argyroneta/pkg/cache/memory"
 	"github.com/lewgun/argyroneta/pkg/constants"
 	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
@@ -40,7 +40,7 @@ type SpiderMgr struct {
 	handlers map[types.Domain]HTMLHandler
 	rules    map[types.Domain]*types.Site
 
-	urlPool cache.Cache
+	urlPool chuper.Cache
 	logger  *logrus.Logger
 
 	mu sync.Mutex
@@ -83,7 +83,7 @@ func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Log
 		return []error{errutil.ErrInvalidParameter}
 	}
 
-	sm.urlPool = memory.New()
+	sm.urlPool = chuper.NewMemoryCache()
 
 	//todo immutable
 	sm.rules = rules

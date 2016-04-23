@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 )
 
@@ -10,21 +9,30 @@ type Blob []byte
 
 type Domain string
 
+type MySQLConf struct {
+	DBName string `json:"dbname"`
+	IP string `json:"ip"`
+	Port int `json:"port"`
+	User string `json:"user"`
+	Password string `json:"password"`
+	ShowSQL bool  `json:"show_sql"`
+	MaxConns int `json:"max_conns"`
+	WorkerChanLen int `json:"worker_chan_len"`
+
+}
+
+type BoltConf struct {
+		Path string `json:"path"`
+}	
 type Store struct {
-	Path string `json:"path"`
+	*MySQLConf  `json:"mysql"`
+	*BoltConf 	`json:"bolt"`
+		 
 }
 
 func (s *Store) String() string {
-	return fmt.Sprintf("[path]: %s", s.Path)
-}
-
-type Auth struct {
-	Account  string `json:"account"`
-	Password string `json:"password"`
-}
-
-func (a *Auth) String() string {
-	return fmt.Sprintf("[auth]: %s:%s", a.Account, a.Password)
+	return ""
+	//return fmt.Sprintf("[path]: %s", s.Path)
 }
 
 type Log struct {
@@ -36,50 +44,68 @@ func (a *Log) String() string {
 	return fmt.Sprintf("[log]: %s:%s", a.Format, a.Level)
 }
 
-type Proxy string
+type Rule struct {
+	ID int `xorm:" pk autoincr 'id'" json:"id"` //pk
 
-func (p Proxy) String() string {
-	return fmt.Sprintf("%s", string(p))
-}
+	Domain string `xorm:" 'domain'" json:"domain"`
 
-type Spider struct {
-	Politeness bool   `json:"politeness"` //是否遵守robots.txt
-	UserAgent  string `json:"user_agent"` //代理
+	//auth
+	Account  string `xorm:" 'account'" json:"account"`
+	Password string `xorm:" 'password'" json:"password"`
 
-}
+	//spider
+	Politeness bool   `xorm:" 'politeness'" json:"politeness"` //是否遵守robots.txt
+	UserAgent  string `xorm:" 'user_agent'" json:"user_agent"` //代理
 
-type Filter struct {
-	AcceptExpr []string `accept`
-	RejectExpr []string `reject`
+	//filter
+	AcceptExpr string `xorm:" 'accept'" json:"accept"`
+	RejectExpr string `xorm:" 'reject'" json:"reject"`
 
-	Accept []*regexp.Regexp `json:"-"`
-	Reject []*regexp.Regexp `json:"-"`
-}
+	MaxDepth int           `xorm:" 'max_depth'" json:"max_depth"` //最大抓取深度
+	Interval time.Duration `xorm:" 'interval'" json:"interval"`   //抓取间隔(以s计)
 
-func (s *Spider) String() string {
-	return fmt.Sprintf("[spider]: user agent:%s politeness: %v", s.UserAgent, s.Politeness)
-}
+	Seed string `xorm:" notnull varchar(256) 'seed'" json:"seed"` //种子url
 
-type Site struct {
-	*Auth   `json:"auth"`
-	*Spider `json:"spider"`
-	Filter  `json:"filter"`
-
-	MaxDepth int           `json:"max_depth"` //最大抓取深度
-	Delay    time.Duration `json:"delay"`     //抓取间隔(以s计)
-
-	Seed string `json:"seed"` //种子url
-
-	ProxyOn bool `json:"proxy_on"` //是否启用HTTP 代理
+	ProxyOn bool `xorm:" 'proxy_on'" json:"proxy_on"` //是否启用HTTP 代理
 
 }
 
-func (s *Site) String() string {
-	return fmt.Sprintf("%v\t%v\t[max depth]: %d\t[delay]: %d\t[seed]: %s\t[proxy on]: %v",
-		s.Auth,
-		s.Spider,
-		s.MaxDepth,
-		s.Delay,
-		s.Seed,
-		s.ProxyOn)
+type Entry struct {
+	ID int `xorm:" pk autoincr 'id'" json:"id"` //pk
+
+	//来源
+	Origin string `xorm:" notnull varchar(256) 'seed'" json:"seed"`
+
+	//原始url
+	URL string `xorm:" notnull varchar(256) 'seed'" json:"seed"`
+
+	//分类
+	Category string `xorm:" 'seed'" json:"seed"`
+
+	//标题
+	Title string `xorm:" 'seed'" json:"seed"`
+
+	//子标题
+	SubTitle string `xorm:" 'seed'" json:"seed"`
+
+	//概要
+	Summary string `xorm:" 'seed'" json:"seed"`
+
+	//作者
+	Author string `xorm:" 'seed'" json:"seed"`
+
+	//发布时间
+	PublishAt time.Time `xorm:" 'seed'" json:"seed"`
+
+	//抓取时间
+	FetchAt time.Time `xorm:" 'seed'" json:"seed"`
+
+	//tags
+	Tags string `xorm:" 'seed'" json:"seed"`
+
+	//内容
+	ContentID string `xorm:" 'content_id'" json:"content_id"`
+
+	//额外信息
+	Extras string `xorm:" varchar(1024) 'extra'" json:"extra"`
 }

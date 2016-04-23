@@ -1,25 +1,39 @@
-//Package bolt 实现基于blotdb的存储设备
 package bolt
 
 import (
-	"time"
+	"sync"
 
-	storeMgr "github.com/lewgun/argyroneta/pkg/store"
+	"github.com/lewgun/argyroneta/pkg/types"
 
-	"github.com/boltdb/bolt"
-	//"github.com/fatih/color"
-	//"github.com/pquerna/ffjson/ffjson"
 	"github.com/Sirupsen/logrus"
 )
 
-var (
 
-	//RuleBucket is a rule bucket
-	RuleBucket = []byte("rule")
+type BlobStore interface {
+	SaveBlob(key []byte, blob types.Blob) error
+	DeleteBlob(key []byte) error
+	Blob(key []byte) (types.Blob, error)
+}
 
-	//BlobBucket is a blob bucket
-	BlobBucket = []byte("blob")
-)
+//Store 为所有存储设备提供一个基本接口
+type Store interface {
+	BlobStore
+
+	PowerOff() error
+}
+
+
+//New new a blotdb instance
+func New( conf string, logger *logrus.Logger) Store {
+	s := &store{}
+	
+	if err := s.init(conf, logger); err != nil {
+		panic(err)
+	}
+	return s
+}
+
+
 
 //store a Store implemented with blot as backend
 type store struct {
@@ -28,7 +42,7 @@ type store struct {
 }
 
 //PowerOn open a bolt instance
-func (bs *store) PowerOn(filePath string, logger *logrus.Logger) error {
+func (bs *store) init(filePath string, logger *logrus.Logger) error {
 
 	bs.logger = logger
 
@@ -81,11 +95,9 @@ func (bs *store) PowerOn(filePath string, logger *logrus.Logger) error {
 }
 
 //Close close the blot instance
-func (bs *store) PowerOff() error {
+func (bs *store) Close() error {
 	return bs.db.Close()
 
 }
 
-func init() {
-	storeMgr.Register(storeMgr.Bolt, &store{})
-}
+func 

@@ -1,71 +1,108 @@
+//
+
 package main
 
 import (
-	"flag"
+	"database/sql"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"os"
-	"os/signal"
-
-	"github.com/lewgun/argyroneta/cmd/argyronetad/pkg/config"
-
-	"github.com/lewgun/argyroneta/pkg/store"
-	_ "github.com/lewgun/argyroneta/pkg/store/bolt"
-
-	"github.com/lewgun/argyroneta/pkg/spidermgr"
-	_ "github.com/lewgun/argyroneta/pkg/spidermgr/site/netease"
-
-	"github.com/lewgun/argyroneta/pkg/logger"
 )
 
-var (
-	confPath = flag.String("conf", "./argyronetad.json", "the path to the config file")
-)
-
-func powerOn(c *config.Config) func(<-chan os.Signal) {
-
-	//logger
-	logger := logger.New(c.Format, c.Level)
-
-	//store
-	s, err := store.PowerOn(store.Bolt, c.Store.Path, logger)
-	if err != nil {
-		panic(err)
-	}
-
-	//spider manager
-	sm := spidermgr.SharedInstance()
-	errs := sm.Init(c.Sites, logger)
-	if err != nil {
-		panic(errs[0])
-	}
-
-	sm.PowerOn()
-
-	return func(sig <-chan os.Signal) {
-		<-sig
-
-		sm.PowerOff()
-		s.PowerOff()
-
-	}
-}
-
-func mustPrepare(path string) *config.Config {
-
-	c := config.New()
-	err := c.Init(path)
-	if err != nil {
-		panic(err)
-	}
-	return c
-
-}
 func main() {
+	os.Remove("./foo.db")
 
-	flag.Parse()
-	sig := make(chan os.Signal, 1)
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
-	go signal.Notify(sig, os.Interrupt, os.Kill)
+	sqlStmt := `
+	create table foo (id integer not null primary key, name text);
+	delete from foo;
+	`
+	_, err = db.Exec(sqlStmt)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStmt)
+		return
+	}
 
-	powerOn(mustPrepare(*confPath))(sig)
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt, err := tx.Prepare("insert into foo(id, name) values(?, ?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+	for i := 0; i < 100; i++ {
+		_, err = stmt.Exec(i, fmt.Sprintf("こんにちわ世界%03d", i))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	tx.Commit()
 
+	rows, err := db.Query("select id, name from foo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var name string
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stmt, err = db.Prepare("select name from foo where id = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+	var name string
+	err = stmt.QueryRow("3").Scan(&name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(name)
+
+	_, err = db.Exec("delete from foo")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("insert into foo(id, name) values(1, 'foo'), (2, 'bar'), (3, 'baz')")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err = db.Query("select id, name from foo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var name string
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

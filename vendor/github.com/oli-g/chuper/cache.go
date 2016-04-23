@@ -17,6 +17,8 @@ type Cache interface {
 	SetNX(key string, value interface{}) (bool, error)
 
 	Delete(key string) error
+
+	Has(key string) bool
 }
 
 type MemoryCache struct {
@@ -70,4 +72,12 @@ func (r *MemoryCache) Delete(key string) error {
 
 	delete(r.items, key)
 	return nil
+}
+
+func (r *MemoryCache) Has(key string) bool {
+	r.Lock()
+	defer r.Unlock()
+
+	_, ok := r.items[key]
+	return ok
 }
