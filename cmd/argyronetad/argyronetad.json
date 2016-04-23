@@ -1,6 +1,19 @@
 {
-  "store": {
-    "path": "./test.db"
+  "store": {    
+    "bolt": {
+      "path": "./taest.db"
+    },
+    "mysql": {
+          "dbname":   "spider",
+          "ip":       "127.0.0.1",
+          "port":     3306,
+          "user":     "root",
+          "password": "root",
+          "show_sql":         true,
+          "max_conns":        10,
+          "worker_chan_len":  20
+          
+    }
   },
 
   "log": {
@@ -8,44 +21,6 @@
     "level": "info"
   },
 
-  "http_proxies": ["http://127.0.0.1", "http://192.168.1.1"],
-
-  "sites": {
-    "news.163.com": {
-        "auth": {
-          "account": "testuser",
-          "password": "testpassword"
-        },
-        "spider": {
-          "politeness": false,
-          "user_agent": "chrome"
-        },
-        "filters": {
-          "selector": [],
-          "accept": [],
-          "reject": []
-        },
-        "max_depth": 2,
-        "delay": 0,
-        "proxy_on": false,
-        "seed": "http://news.163.com/rank/"
-
-      },
-    "news.sohu.com": {
-      "auth": {
-        "account": "testuser",
-        "password": "testpassword"
-      },
-      "spider": {
-        "politeness": false,
-        "user_agent": "chrome"
-      },
-      "max_depth": 2,
-      "delay": 60,
-      "proxy_on": false,
-      "seed": "http://news.163.com"
-
-    }
-  }
+  "http_proxies": ["http://127.0.0.1", "http://192.168.1.1"]
 
 }

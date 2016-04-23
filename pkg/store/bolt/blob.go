@@ -3,31 +3,31 @@ package bolt
 import (
 	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/misc"
+	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/boltdb/bolt"
-	"github.com/lewgun/argyroneta/pkg/types"
 )
 
-func (bs *store) SaveBlob(key string, raw types.Blob) error {
+func (bs *store) SaveBlob(key []byte, raw types.Blob) error {
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(BlobBucket)
 		gzipped, e := misc.Zip(raw)
 		if e != nil {
 			return e
 		}
-		return bu.Put([]byte(key), gzipped)
+		return bu.Put(key, gzipped)
 	})
 	return err
 }
 
-func (b *store) Blob(key string) (types.Blob, error) {
+func (b *store) Blob(key []byte) (types.Blob, error) {
 	var (
 		raw []byte
 		err error
 	)
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(BlobBucket)
-		gzipped := bu.Get([]byte(key))
+		gzipped := bu.Get(key)
 		if len(gzipped) == 0 {
 			return errutil.ErrNotFound
 		}
@@ -42,11 +42,11 @@ func (b *store) Blob(key string) (types.Blob, error) {
 
 }
 
-func (bs *store) DeleteBlob(key string) error {
+func (bs *store) DeleteBlob(key []byte) error {
 
 	// Delete the key in a different write transaction.
 	err := bs.db.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket(RuleBucket).Delete([]byte(key))
+		return tx.Bucket(BlobBucket).Delete(key)
 	})
 	return err
 

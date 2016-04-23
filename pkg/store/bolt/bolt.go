@@ -1,13 +1,17 @@
 package bolt
 
 import (
-	"sync"
+	"time"
 
 	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/boltdb/bolt"
 )
 
+var (
+	BlobBucket = []byte("blob")
+)
 
 type BlobStore interface {
 	SaveBlob(key []byte, blob types.Blob) error
@@ -22,18 +26,19 @@ type Store interface {
 	PowerOff() error
 }
 
-
 //New new a blotdb instance
-func New( conf string, logger *logrus.Logger) Store {
+func New(conf *types.BoltConf, logger *logrus.Logger) Store {
+
+	if conf == nil || logger == nil {
+		return nil
+	}
 	s := &store{}
-	
+
 	if err := s.init(conf, logger); err != nil {
-		panic(err)
+		logger.Fatalln(err)
 	}
 	return s
 }
-
-
 
 //store a Store implemented with blot as backend
 type store struct {
@@ -42,13 +47,13 @@ type store struct {
 }
 
 //PowerOn open a bolt instance
-func (bs *store) init(filePath string, logger *logrus.Logger) error {
+func (bs *store) init(conf *types.BoltConf, logger *logrus.Logger) error {
 
 	bs.logger = logger
 
 	var err error
 	bs.db, err = bolt.Open(
-		filePath,
+		conf.Path,
 		0600,
 		&bolt.Options{
 			Timeout: 1 * time.Second,
@@ -59,12 +64,8 @@ func (bs *store) init(filePath string, logger *logrus.Logger) error {
 	}
 
 	err = bs.db.Update(func(tx *bolt.Tx) error {
-		_, e := tx.CreateBucketIfNotExists(RuleBucket)
-		if e != nil {
-			return e
-		}
 
-		_, e = tx.CreateBucketIfNotExists(BlobBucket)
+		_, e := tx.CreateBucketIfNotExists(BlobBucket)
 		if e != nil {
 			return e
 		}
@@ -94,10 +95,8 @@ func (bs *store) init(filePath string, logger *logrus.Logger) error {
 	return nil
 }
 
-//Close close the blot instance
-func (bs *store) Close() error {
+//PowerOff close the blot instance
+func (bs *store) PowerOff() error {
 	return bs.db.Close()
 
 }
-
-func 

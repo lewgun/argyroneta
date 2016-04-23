@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
-	"time"
 
-	//"github.com/lewgun/argyroneta/pkg/cache"
-	//"github.com/lewgun/argyroneta/pkg/cache/memory"
 	"github.com/lewgun/argyroneta/pkg/constants"
 	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
@@ -38,13 +35,15 @@ type SpiderMgr struct {
 	//about spiders
 	spiders  map[types.Domain]*Spider
 	handlers map[types.Domain]HTMLHandler
-	rules    map[types.Domain]*types.Site
+	rules    map[types.Domain]types.Rule
 
 	urlPool chuper.Cache
 	logger  *logrus.Logger
 
 	mu sync.Mutex
 	wg sync.WaitGroup
+
+	initialized bool
 }
 
 func (sm *SpiderMgr) register(domain types.Domain, maker HTMLHandler) error {
@@ -78,15 +77,16 @@ func (sm *SpiderMgr) PowerOff() error {
 
 }
 
-func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Logger) []error {
-	if rules == nil {
-		return []error{errutil.ErrInvalidParameter}
-	}
+func (sm *SpiderMgr) init(rules []types.Rule, logger *logrus.Logger) error {
 
 	sm.urlPool = chuper.NewMemoryCache()
 
 	//todo immutable
-	sm.rules = rules
+	sm.rules = make(map[types.Domain]types.Rule)
+
+	for _, rule := range rules {
+		sm.rules[rule.Domain] = rule
+	}
 
 	sm.logger = logger
 
@@ -95,29 +95,26 @@ func (sm *SpiderMgr) Init(rules map[types.Domain]*types.Site, logger *logrus.Log
 		ok bool
 		h  HTMLHandler
 
-		errs = make([]error, 0, len(rules))
+		err error
 	)
 
-	for domain, _ := range rules {
+	for domain, _ := range sm.rules {
 		if h, ok = sm.handlers[domain]; !ok {
-			err := fmt.Errorf("no html handler for '%s' ", domain)
-			sm.logger.Errorln(err)
-
-			errs = append(errs, err)
-			continue
+			err = fmt.Errorf("no html handler for '%s' ", domain)
+			return err
 		}
 
 		spider, err := sm.spiderMaker(domain, h)
 		if err != nil {
-			errs = append(errs, err)
-			continue
+			return err
 		}
 
 		sm.spiders[domain] = spider
 	}
 
 	sm.logger.Info("spider manager's init is finished")
-	return errs
+
+	return nil
 
 }
 
@@ -141,7 +138,7 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 	}
 
 	crawler := chuper.New()
-	crawler.CrawlDelay = rule.Delay * time.Second
+	//crawler.CrawlDelay = rule.Delay * time.Second
 	crawler.UserAgent = rule.UserAgent
 	crawler.Cache = sm.urlPool
 	crawler.CrawlPoliteness = rule.Politeness
@@ -177,9 +174,21 @@ func Register(domain types.Domain, h HTMLHandler) error {
 
 }
 
-func SharedInstance() *SpiderMgr {
-	if SM == nil {
-		panic("never happen")
+//SharedInstInit initialize the shared instance, it can be called only once.
+func SharedInstInit(rules []types.Rule, logger *logrus.Logger) error {
+
+	if SM.initialized {
+		return fmt.Errorf("the spider manager had initialized, please use the global variable 'spidermgr.SM' instead")
 	}
-	return SM
+
+	if rules == nil || logger == nil {
+		return errutil.ErrInvalidParameter
+	}
+
+	if err := SM.init(rules, logger); err != nil {
+		return err
+	}
+	SM.initialized = true
+
+	return nil
 }
