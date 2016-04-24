@@ -13,20 +13,19 @@ type Context interface {
 	Log(fields map[string]interface{}) *logrus.Entry
 	URL() *url.URL
 	Method() string
-	SourceURL() *url.URL
 	Depth() int
-	Extra() interface{}
+	Extras() interface{}
 }
 
 type Ctx struct {
 	*fetchbot.Context
-	C Cache
-	E interface{}
-	L *logrus.Logger
+	c Cache
+	e interface{}
+	l *logrus.Logger
 }
 
 func (c *Ctx) Cache() Cache {
-	return c.C
+	return c.c
 }
 
 func (c *Ctx) Queue() Enqueuer {
@@ -38,7 +37,7 @@ func (c *Ctx) Log(fields map[string]interface{}) *logrus.Entry {
 	for k, v := range fields {
 		data[k] = v
 	}
-	return c.L.WithFields(data)
+	return c.l.WithFields(data)
 }
 
 func (c *Ctx) URL() *url.URL {
@@ -49,20 +48,18 @@ func (c *Ctx) Method() string {
 	return c.Cmd.Method()
 }
 
-func (c *Ctx) SourceURL() *url.URL {
+func (c *Ctx) Extras() interface{} {
 	switch cmd := c.Cmd.(type) {
 	case *Cmd:
-		return cmd.SourceURL()
+		return cmd.Extras()
 
 	case *CmdBasicAuth:
-		return cmd.SourceURL()
+		return cmd.Extras()
+
 	default:
 		return nil
 	}
-}
 
-func (c *Ctx) Extra() interface{} {
-	return c.E
 }
 
 func (c *Ctx) Depth() int {

@@ -14,7 +14,7 @@ var (
 )
 
 type BlobStore interface {
-	SaveBlob(key []byte, blob types.Blob) error
+	SaveBlob(blob types.Blob) ([]byte, error)
 	DeleteBlob(key []byte) error
 	Blob(key []byte) (types.Blob, error)
 }
@@ -60,6 +60,7 @@ func (bs *store) init(conf *types.BoltConf, logger *logrus.Logger) error {
 		})
 
 	if err != nil {
+		println(err.Error())
 		return err
 	}
 

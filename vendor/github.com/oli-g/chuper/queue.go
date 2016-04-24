@@ -11,45 +11,61 @@ type Queue struct {
 }
 
 type Enqueuer interface {
-	Enqueue(string, string, string, int) error
+	Enqueue(string, string, int, ...interface{}) error
 
-	EnqueueWithBasicAuth(string, string, string, int, string, string) error
+	EnqueueWithBasicAuth(string, string, int, string, string, ...interface{}) error
 
-	EnqueueCommand(fetchbot.Command) error
+	EnqueueCommand(Command) error
 }
 
-func (q *Queue) Enqueue(method, URL, sourceURL string, depth int) error {
+func (q *Queue) Enqueue(method, URL string, depth int, extras ...interface{}) error {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
-	s, err := url.Parse(sourceURL)
-	if err != nil {
-		return err
+
+	cmd := &Cmd{
+		Cmd: &fetchbot.Cmd{U: u, M: method},
+		d:   depth,
 	}
 
-	cmd := &Cmd{&fetchbot.Cmd{U: u, M: method}, s, depth}
+	if len(extras) != 0 {
+		cmd.extras = extras
+	}
+
 	if err = q.Send(cmd); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (q *Queue) EnqueueWithBasicAuth(method string, URL string, sourceURL string, depth int, user string, password string) error {
+func (q *Queue) EnqueueWithBasicAuth(
+	method string,
+	URL string,
+	depth int,
+	user string,
+	password string,
+	extras ...interface{}) error {
 	if user == "" && password == "" {
-		return q.Enqueue(method, URL, sourceURL, depth)
+		return q.Enqueue(method, URL, depth)
 	}
 
 	u, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
-	s, err := url.Parse(sourceURL)
-	if err != nil {
-		return err
+
+	cmd := &CmdBasicAuth{
+		Cmd:  &fetchbot.Cmd{U: u, M: method},
+		d:    depth,
+		user: user,
+		pass: password,
 	}
 
-	cmd := &CmdBasicAuth{&fetchbot.Cmd{U: u, M: method}, s, depth, user, password}
+	if len(extras) != 0 {
+		cmd.extras = extras
+	}
+
 	if err = q.Send(cmd); err != nil {
 		return err
 	}
@@ -57,6 +73,6 @@ func (q *Queue) EnqueueWithBasicAuth(method string, URL string, sourceURL string
 	return nil
 }
 
-func (q *Queue) EnqueueCommand(cmd fetchbot.Command) error {
+func (q *Queue) EnqueueCommand(cmd Command) error {
 	return q.Send(cmd)
 }

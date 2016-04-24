@@ -71,10 +71,12 @@ func NewMux() *Mux {
 func (mux *Mux) Handle(ctx *Context, res *http.Response, err error) {
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
+
 	if err != nil {
 		// Find a matching error handler
 		if h, ok := mux.errm[err]; ok {
 			h.Handle(ctx, res, err)
+
 			return
 		}
 		if h, ok := mux.errm[nil]; ok {
@@ -139,27 +141,33 @@ type ResponseMatcher struct {
 // match indicates if the response Handler matches the provided response, and if so,
 // and if a path criteria is specified, it also indicates the length of the path match.
 func (r *ResponseMatcher) match(res *http.Response) (bool, int) {
+
 	if r.method != "" {
 		if r.method != res.Request.Method {
 			return false, 0
 		}
 	}
+
 	if r.contentType != "" {
 		if r.contentType != getContentType(res.Header.Get("Content-Type")) {
 			return false, 0
 		}
 	}
+
 	if r.minStatus != 0 || r.maxStatus != 0 {
 		if res.StatusCode < r.minStatus || res.StatusCode > r.maxStatus {
 			return false, 0
 		}
 	}
+
 	if r.scheme != "" {
 		if res.Request.URL.Scheme != r.scheme {
 			return false, 0
 		}
 	}
+
 	if r.host != "" {
+		println(r.host, res.Request.URL.Host)
 		if res.Request.URL.Host != r.host {
 			return false, 0
 		}

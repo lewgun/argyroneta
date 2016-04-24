@@ -6,18 +6,22 @@ import (
 	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/boltdb/bolt"
+	"github.com/renstrom/shortuuid"
 )
 
-func (bs *store) SaveBlob(key []byte, raw types.Blob) error {
+func (bs *store) SaveBlob(raw types.Blob) ([]byte, error) {
+
+	key := []byte(shortuuid.New())
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		bu := tx.Bucket(BlobBucket)
 		gzipped, e := misc.Zip(raw)
 		if e != nil {
 			return e
 		}
+
 		return bu.Put(key, gzipped)
 	})
-	return err
+	return key, err
 }
 
 func (b *store) Blob(key []byte) (types.Blob, error) {

@@ -9,7 +9,7 @@
           "port":     3306,
           "user":     "root",
           "password": "root",
-          "show_sql":         true,
+          "show_sql":         false,
           "max_conns":        10,
           "worker_chan_len":  20
           
@@ -18,7 +18,7 @@
 
   "log": {
     "format": "text",
-    "level": "info"
+    "level": "error"
   },
 
   "http_proxies": ["http://127.0.0.1", "http://192.168.1.1"]

@@ -3,7 +3,7 @@ package spidermgr
 
 import (
 	"fmt"
-	"net/url"
+	//"net/url"
 	"sync"
 
 	"github.com/lewgun/argyroneta/pkg/constants"
@@ -125,7 +125,8 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 		return nil, errutil.ErrNotFound
 	}
 
-	parsedURL, err := url.Parse(rule.Seed)
+	var err error
+	//parsedURL, err := url.Parse(rule.Seed)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 		//Method:      "GET",
 		ContentType: "text/html",
 		Status:      200,
-		Host:        parsedURL.Host,
+		//	Host:        parsedURL.Host,
 	}
 
 	crawler := chuper.New()
@@ -143,7 +144,6 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 	crawler.Cache = sm.urlPool
 	crawler.CrawlPoliteness = rule.Politeness
 	crawler.Logger = sm.logger
-	crawler.Extra = rule
 
 	crawler.Register(criteria, chuper.ProcessorFunc(h))
 
@@ -160,7 +160,7 @@ func (sm *SpiderMgr) spiderMaker(domain types.Domain, h HTMLHandler) (*Spider, e
 func (sm *SpiderMgr) PowerOn() error {
 
 	for domain, spider := range sm.spiders {
-		spider.Enqueuer.Enqueue(constants.HTTP_GET, sm.rules[domain].Seed, "", sm.rules[domain].MaxDepth)
+		spider.Enqueuer.Enqueue(constants.HTTP_GET, sm.rules[domain].Seed, sm.rules[domain].MaxDepth)
 		sm.logger.Infof("seed for %s is putted with max depth: %d", domain, sm.rules[domain].MaxDepth)
 
 	}

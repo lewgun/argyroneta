@@ -1,45 +1,42 @@
 package chuper
 
 import (
-	"net/url"
-
 	"github.com/PuerkitoBio/fetchbot"
 )
 
 type Command interface {
-	URL() *url.URL
-	Method() string
-	SourceURL() *url.URL
+	fetchbot.Command
 	Depth() int
+	Extras() interface{}
 }
 
 type Cmd struct {
 	*fetchbot.Cmd
-	S *url.URL
-	D int
-}
-
-func (c *Cmd) SourceURL() *url.URL {
-	return c.S
+	d      int
+	extras interface{}
 }
 
 func (c *Cmd) Depth() int {
-	return c.D
+	return c.d
+}
+
+func (c *Cmd) Extras() interface{} {
+	return c.extras
 }
 
 type CmdBasicAuth struct {
 	*fetchbot.Cmd
-	S          *url.URL
-	D          int
+	d          int
+	extras     interface{}
 	user, pass string
 }
 
-func (c *CmdBasicAuth) SourceURL() *url.URL {
-	return c.S
+func (c *CmdBasicAuth) Depth() int {
+	return c.d
 }
 
-func (c *CmdBasicAuth) Depth() int {
-	return c.D
+func (c *CmdBasicAuth) Extras() interface{} {
+	return c.extras
 }
 
 func (c *CmdBasicAuth) BasicAuth() (string, string) {
