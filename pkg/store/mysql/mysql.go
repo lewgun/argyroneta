@@ -1,16 +1,15 @@
 package mysql
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/Sirupsen/logrus"
-
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"github.com/lewgun/argyroneta/pkg/errutil"
 )
 
 type store struct {

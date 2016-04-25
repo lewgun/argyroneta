@@ -138,3 +138,8 @@ type Entry struct {
 	//额外信息
 	Extras string `xorm:" varchar(1024) 'extra'" json:"extra"`
 }
+
+type TopReq struct {
+	N        int    `json:"n"`
+	Category string `json:"category"`
+}

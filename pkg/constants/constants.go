@@ -10,3 +10,7 @@ const (
 	HTTP_POST = "POST"
 	HTTP_GET  = "GET"
 )
+
+const (
+	ModeRelease = "release"
+)
