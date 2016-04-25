@@ -1,8 +1,10 @@
 package bolt
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/lewgun/argyroneta/pkg/errutil"
 	"github.com/lewgun/argyroneta/pkg/types"
 
 	"github.com/Sirupsen/logrus"
@@ -26,24 +28,34 @@ type Store interface {
 	PowerOff() error
 }
 
-//New new a blotdb instance
-func New(conf *types.BoltConf, logger *logrus.Logger) Store {
+var B *store
+
+func init() {
+	B = &store{}
+}
+
+//SharedInstInit initialize the shared instance, it can be called only once.
+func SharedInstInit(conf *types.BoltConf, logger *logrus.Logger) error {
+
+	if B.initialized {
+		return fmt.Errorf("the bolt had initialized, please use the global variable 'bolt.B' instead")
+	}
 
 	if conf == nil || logger == nil {
-		return nil
+		return errutil.ErrInvalidParameter
 	}
-	s := &store{}
-
-	if err := s.init(conf, logger); err != nil {
-		logger.Fatalln(err)
+	if err := B.init(conf, logger); err != nil {
+		return err
 	}
-	return s
+	B.initialized = true
+	return nil
 }
 
 //store a Store implemented with blot as backend
 type store struct {
-	db     *bolt.DB
-	logger *logrus.Logger
+	initialized bool
+	db          *bolt.DB
+	logger      *logrus.Logger
 }
 
 //PowerOn open a bolt instance

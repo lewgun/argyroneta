@@ -7,17 +7,26 @@ import (
 
 	"github.com/Sirupsen/logrus"
 
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"github.com/lewgun/argyroneta/pkg/errutil"
 )
 
 type store struct {
-	chEntry chan interface{}
-	signal  chan types.Signal
+	initialized bool
+	chEntry     chan interface{}
+	signal      chan types.Signal
 
 	logger *logrus.Logger
 
 	*xorm.Engine
+}
+
+var M *store
+
+func init() {
+	M = &store{}
 }
 
 func (m *store) init(c *types.MySQLConf, logger *logrus.Logger) error {
@@ -69,14 +78,19 @@ func (m *store) PowerOff() {
 
 }
 
-func New(c *types.MySQLConf, logger *logrus.Logger) *store {
-	if c == nil || logger == nil {
-		return nil
+////SharedInstInit initialize the shared instance, it can be called only once.
+func SharedInstInit(c *types.MySQLConf, logger *logrus.Logger) error {
+
+	if M.initialized {
+		return fmt.Errorf("the bolt had initialized, please use the global variable 'mysql.M' instead")
 	}
 
-	s := &store{}
-	if err := s.init(c, logger); err != nil {
-		logger.Fatalln("new mysql instance failed.")
+	if c == nil || logger == nil {
+		return errutil.ErrInvalidParameter
 	}
-	return s
+
+	if err := M.init(c, logger); err != nil {
+		return err
+	}
+	return nil
 }

@@ -1,11 +1,11 @@
 {
   "store": {    
     "bolt": {
-      "path": "./taest.db"
+      "path": "./test.db"
     },
     "mysql": {
           "dbname":   "spider",
-          "ip":       "127.0.0.1",
+          "ip":       "192.168.200.12",
           "port":     3306,
           "user":     "root",
           "password": "root",

@@ -214,7 +214,6 @@ func (c *Crawler) newRequestHandler() fetchbot.Handler {
 
 func (c *Crawler) newHTMLHandler(procs ...Processor) fetchbot.Handler {
 	return fetchbot.HandlerFunc(func(ctx *fetchbot.Context, res *http.Response, err error) {
-
 		context := &Ctx{
 			Context: ctx,
 			c:       c.Cache,

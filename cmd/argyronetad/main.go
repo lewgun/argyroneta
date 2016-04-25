@@ -26,18 +26,18 @@ func powerOn(c *config.Config) func(<-chan os.Signal) {
 	logger := logger.New(c.Format, c.Level)
 
 	//bolt
-	b := bolt.New(c.Store.BoltConf, logger)
-	if b == nil {
-		logger.Fatalln("boot up bolt failed with invalid parameter")
+	err := bolt.SharedInstInit(c.Store.BoltConf, logger)
+	if err != nil {
+		logger.Fatalln("boot up bolt failed with error: %v", err)
 	}
 
 	//mysql
-	m := mysql.New(c.Store.MySQLConf, logger)
-	if m == nil {
+	err = mysql.SharedInstInit(c.Store.MySQLConf, logger)
+	if err != nil {
 		logger.Fatalln("boot up mysql failed with invalid parameter")
 	}
 
-	rules, err := m.Rules()
+	rules, err := mysql.M.Rules()
 	if err != nil {
 		logger.Fatalf("can't get rules with error: %v", err)
 	}
@@ -55,8 +55,8 @@ func powerOn(c *config.Config) func(<-chan os.Signal) {
 
 		spidermgr.SM.PowerOff()
 
-		b.PowerOff()
-		m.PowerOff()
+		bolt.B.PowerOff()
+		mysql.M.PowerOff()
 
 	}
 }

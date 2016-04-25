@@ -12,3 +12,10 @@ func (s *store) Rules() ([]types.Rule, error) {
 	return rules, err
 
 }
+
+func (s *store) AddEntry(e *types.Entry) error {
+
+	_, err := s.Engine.Insert(e)
+	return err
+
+}
