@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/lewgun/argyroneta/cmd/argyronetad/pkg/config"
+	"github.com/lewgun/argyroneta/cmd/spiderd/pkg/config"
 
 	"github.com/lewgun/argyroneta/pkg/store/bolt"
 	"github.com/lewgun/argyroneta/pkg/store/mysql"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	confPath = flag.String("conf", "./argyronetad.json", "the path to the config file")
+	confPath = flag.String("conf", "./spiderd.json", "the path to the config file")
 )
 
 func powerOn(c *config.Config) func(<-chan os.Signal) {
