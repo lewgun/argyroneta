@@ -1,0 +1,28 @@
+{
+    "log": {
+        "format": "text",
+        "level": "error"
+    },
+    "webserver": {
+        "port": 8088,
+        "prefix": "",
+        "run_mode": "debug"
+    },
+    "store": {
+        "bolt": {
+            "path": "./test.db"
+        },
+        "mysql": {
+            "dbname":   "spider",
+            "ip":       "127.0.0.1",
+            "port":     3306,
+            "user":     "root",
+            "password": "root",
+            "show_sql":         false,
+            "max_conns":        10,
+            "worker_chan_len":  20
+
+        }
+    }
+
+}
