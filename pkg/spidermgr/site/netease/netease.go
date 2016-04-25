@@ -3,7 +3,6 @@ package netease
 import (
 	"bytes"
 	"io/ioutil"
-	//"os"
 	"regexp"
 	"time"
 
@@ -18,10 +17,8 @@ import (
 	"github.com/lewgun/argyroneta/pkg/store/mysql"
 	"github.com/lewgun/argyroneta/pkg/types"
 
-	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
-	"reflect"
 )
 
 func gbk2Utf8(raw []byte) ([]byte, error) {
@@ -32,6 +29,7 @@ func gbk2Utf8(raw []byte) ([]byte, error) {
 }
 
 var handlerMap map[int]spidermgr.HTMLHandler
+var reNewsContent *regexp.Regexp
 
 //热点新闻
 func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
@@ -50,11 +48,10 @@ func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
 	}
 
 	// 获取内容
-	content := query.Find("#endText").Text()
-	re, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
 	// content = re.ReplaceAllStringFunc(content, strings.ToLower)
+	content, _ := gbk2Utf8([]byte(query.Find("#endText").Text()))
 
-	cid, err := bolt.B.SaveBlob(types.Blob(re.ReplaceAll([]byte(content), []byte(""))))
+	cid, err := bolt.B.SaveBlob(types.Blob(reNewsContent.ReplaceAll(content, []byte(""))))
 	if err != nil {
 		//todo err check
 		return false
@@ -63,6 +60,11 @@ func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
 	// 获取标题
 	title := query.Find(".post_content_main h1").Text()
 	utf8Title, _ := gbk2Utf8([]byte(title))
+
+	//过滤掉空title的文章
+	if utf8Title == nil {
+		return false
+	}
 
 	// 获取发布日期
 	source := query.Find("div.post_time_source").Text()
@@ -87,9 +89,8 @@ func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
 		ContentID: string(cid),
 	}
 
-	fmt.Println(reflect.TypeOf(ctx.Extras()).Name())
 	if params, ok := ctx.Extras().(map[string]interface{}); ok {
-		entry.Origin = params["category"].(string)
+		entry.Category = params["category"].(string)
 		entry.Summary = params["top"].(string)
 	}
 
@@ -109,7 +110,7 @@ func handlerRankNews(ctx chuper.Context, doc *goquery.Document) bool {
 		"本月跟贴排行",
 	}
 	// 获取新闻分类
-	category := doc.Find(".titleBar h2").Text()
+	category, _ := gbk2Utf8([]byte(doc.Find(".titleBar h2").Text()))
 
 	topUrls := map[string]string{}
 
@@ -138,7 +139,7 @@ func handlerRankNews(ctx chuper.Context, doc *goquery.Document) bool {
 	for url, top := range topUrls {
 
 		extras := map[string]interface{}{
-			"category": category,
+			"category": string(category),
 			"top":      top,
 		}
 
@@ -191,6 +192,8 @@ func init() {
 	handlerMap[0] = handlerHotNews
 	handlerMap[1] = handlerRankNews
 	handlerMap[2] = handlerRankIndex
+
+	reNewsContent = regexp.MustCompile("\\<[\\S\\s]+?\\>")
 
 	spidermgr.Register(constants.NetEase, handler)
 }

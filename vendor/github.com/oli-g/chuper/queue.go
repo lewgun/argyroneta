@@ -30,7 +30,7 @@ func (q *Queue) Enqueue(method, URL string, depth int, extras ...interface{}) er
 	}
 
 	if len(extras) != 0 {
-		cmd.extras = extras
+		cmd.extras = extras[0]
 	}
 
 	if err = q.Send(cmd); err != nil {
@@ -63,7 +63,7 @@ func (q *Queue) EnqueueWithBasicAuth(
 	}
 
 	if len(extras) != 0 {
-		cmd.extras = extras
+		cmd.extras = extras[0]
 	}
 
 	if err = q.Send(cmd); err != nil {
