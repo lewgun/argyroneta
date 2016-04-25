@@ -64,7 +64,8 @@ func (sm *SpiderMgr) PowerOff() error {
 		go func() {
 			defer sm.wg.Done()
 			sm.logger.Infof("wait for spider for %s finished\n", domain)
-			spider.Crawler.Finish()
+			//spider.Crawler.Finish()
+			spider.Crawler.Cancel()
 			spider.Crawler.Block()
 		}()
 

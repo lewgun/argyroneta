@@ -3,7 +3,7 @@ package netease
 import (
 	"bytes"
 	"io/ioutil"
-	"os"
+	//"os"
 	"regexp"
 	"time"
 
@@ -18,8 +18,10 @@ import (
 	"github.com/lewgun/argyroneta/pkg/store/mysql"
 	"github.com/lewgun/argyroneta/pkg/types"
 
+	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
+	"reflect"
 )
 
 func gbk2Utf8(raw []byte) ([]byte, error) {
@@ -54,7 +56,6 @@ func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
 
 	cid, err := bolt.B.SaveBlob(types.Blob(re.ReplaceAll([]byte(content), []byte(""))))
 	if err != nil {
-		fmt.Println(err)
 		//todo err check
 		return false
 	}
@@ -68,16 +69,25 @@ func handlerHotNews(ctx chuper.Context, query *goquery.Document) bool {
 	utf8Source, _ := gbk2Utf8([]byte(source))
 	fields := bytes.Split(utf8Source, []byte("来源:"))
 
-	publishAt, _ := time.Parse("2006-01-02 15:04:05", string(bytes.TrimSpace(fields[0])))
+	var (
+		publishAt time.Time
+		origin    string
+	)
+	if len(fields) >= 2 {
+		publishAt, _ = time.Parse("2006-01-02 15:04:05", string(bytes.TrimSpace(fields[0])))
+		origin = string(bytes.TrimSpace(fields[1]))
+	}
+
 	entry := &types.Entry{
 		URL:       ctx.URL().String(),
 		Title:     string(utf8Title),
 		PublishAt: publishAt,
-		Origin:    string(bytes.TrimSpace(fields[1])),
+		Origin:    origin,
 		FetchAt:   time.Now(),
 		ContentID: string(cid),
 	}
 
+	fmt.Println(reflect.TypeOf(ctx.Extras()).Name())
 	if params, ok := ctx.Extras().(map[string]interface{}); ok {
 		entry.Origin = params["category"].(string)
 		entry.Summary = params["top"].(string)
@@ -164,16 +174,6 @@ func handlerRankIndex(ctx chuper.Context, doc *goquery.Document) bool {
 }
 
 func handler(ctx chuper.Context, doc *goquery.Document) bool {
-
-	defer func() {
-		if e := recover(); e != nil {
-			f, _ := os.OpenFile("./abcd.txt", 666, os.ModePerm)
-			f.WriteString(e.(error).Error())
-			f.Sync()
-			f.Close()
-
-		}
-	}()
 
 	h, ok := handlerMap[ctx.Depth()]
 	if !ok {
